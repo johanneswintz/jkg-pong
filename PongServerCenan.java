@@ -1,5 +1,3 @@
-Java Server
-
 import abiturklassen.netzklassen.*;
 
 public class Pong_Server extends Server{
@@ -38,8 +36,8 @@ public class Pong_Server extends Server{
 	
 	
 	byte playerCount = 0; //max 2
-	byte ready = 0; //max 2
 	String[] player = new String[2];
+	boolean[] ready = new boolean[2];
 	
 //------KONSTRUKTOR
 
@@ -278,9 +276,9 @@ public class Pong_Server extends Server{
 	
 	public void processMessage(String pClientIP, int pClientPort, String pMessage){
 		if(pMessage.equals("READY")){
-			ready++;
+			ready[(pClientIP==player[0])?0:1] = true;
 			System.out.println("[DEBUG] - Ready von: " + pClientIP);
-			if(ready == 2){	
+			if(ready[0]&&ready[1]){	
 				sendToAll("START");		
 				System.out.println("[DEBUG] - Start gesendet");
 			}		
@@ -288,7 +286,8 @@ public class Pong_Server extends Server{
 	}
 	public void processClosedConnection(String pClientIP, int pClientPort){
 		playerCount--;
-		ready--;
+		ready[(pClientIP==player[0])?0:1] = false;
+		player[(pClientIP==player[0])?0:1] = "";
 		pause = true;
 		System.out.println("[DEBUG] - " + pClientIP + " ist weg");
 	}

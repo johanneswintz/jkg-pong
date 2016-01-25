@@ -34,6 +34,7 @@ public class Pong_Server extends Server{
     
     byte playerCount = 0; //max 2
     String[] player = new String[2];
+    int[] playerPort = new int[2];
     boolean[] ready = new boolean[2];
     
 //------KONSTRUKTOR
@@ -72,6 +73,7 @@ public class Pong_Server extends Server{
             ballBewegung();
             richtungAendern();
             paint();
+            sendData();
         }
     }
 
@@ -223,7 +225,15 @@ public class Pong_Server extends Server{
         pause = false;
         return;
     }
-
+    
+//////SEND DATA    
+    public void sendData(){
+    	if(playerCount==2){
+    		send(player[0],playerPort[0],"DATA:"+posx+":"+posy+":"+lposAus+":"+rposAus+":"+scoreL+":"+scoreR);
+    		send(player[1],playerPort[1],"DATA:"+posx+":"+posy+":"+rposAus+":"+lposAus+":"+scoreR+":"+scoreL);
+    	}
+    }
+    
 //////BEENDEN
     public void beenden() {
         if (scoreL > scoreR)
@@ -251,6 +261,7 @@ public class Pong_Server extends Server{
             playerCount--;
         }else{
             player[playerCount-1] = pClientIP + "";
+            playerPort[playerCount-1] = pClientPort;
             sendInitData(pClientIP , pClientPort);
             System.out.println("[DEBUG] - " + player[playerCount-1] + " hat sich als " + playerCount+ "er verbunden!");
         }
@@ -275,12 +286,12 @@ public class Pong_Server extends Server{
         playerCount--;
         ready[(pClientIP==player[0])?0:1] = false;
         player[(pClientIP==player[0])?0:1] = "";
+        playerPort[pClientIP==player[0]?0:1] = 0;
         pause = true;
         System.out.println("[DEBUG] - " + pClientIP + " ist weg");
     }
     
     public void sendInitData(String pClientIP, int pClientPort){
-    	//INIT:<Xfenster>:<Yfenster>:<Xball>:<Yball>:<BallLength>:<Xpaddle>:<Ypaddle>:<XpadLength>:<YpadLength>:<XpadENEM>:<YpadENEM>
         if(player[0].equals(pClientIP)){
         	send(pClientIP, pClientPort, "INIT:"+fensterX+":"+fensterY+":"+posx+":"+posy+":"+ballDicke+":"+pongSeitenabstand+":"+lposAus+":"+pongDicke+":"+pongLaenge+":"+(fensterX-(pongSeitenabstand+pongDicke))+":"+rposAus);
         }else{

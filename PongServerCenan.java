@@ -67,6 +67,10 @@ public class Pong_Server extends Server{
         startTime = System.currentTimeMillis();
         tempTime = System.currentTimeMillis() + 3000;
 
+        pause = true;
+		pause();
+		
+        
         while (!pause) {
             startsequenz();
             wandBerechnung();
@@ -189,6 +193,8 @@ public class Pong_Server extends Server{
             posx = (int) (fensterX / 2) - (ballDicke / 2);
             if ((scoreL >= scoreMax) || (scoreR >= scoreMax)) {
                 paint();
+                ready[0] = false;
+                ready[1] = false;
                 beenden();
             }
         } else if (posx >= (fensterX - (pongSeitenabstand + pongDicke + ballDicke))
@@ -203,6 +209,8 @@ public class Pong_Server extends Server{
             posx = (int) (fensterX / 2) - (ballDicke / 2);
             if ((scoreL >= scoreMax) || (scoreR >= scoreMax)) {
                 paint();
+                ready[0] = false;
+                ready[1] = false;
                 beenden();
             }
         }
@@ -215,9 +223,12 @@ public class Pong_Server extends Server{
     public void pause() {
         richtungv += 2;
         richtungh += 2;
+        long pauseLengthTime = System.currentTimeMillis();
         while (pause) {
-
+        	if(ready[0] && ready[1]) pause = false;
         }
+		startTime += System.currentTimeMillis()-pauseLengthTime;
+		tempTime += System.currentTimeMillis()-pauseLengthTime;
         paint();
         
         richtungv -= 2;
@@ -243,9 +254,12 @@ public class Pong_Server extends Server{
         if (scoreL == scoreR)
             System.err.println("Unentschieden!");
         pause = true;
+        long pauseLengthTime = System.currentTimeMillis();
         while (pause) {
-
+        	if(ready[0] && ready[1]) pause = false;
         }
+		startTime += System.currentTimeMillis()-pauseLengthTime;
+		tempTime += System.currentTimeMillis()-pauseLengthTime;
     }
 
 //////MAIN
@@ -272,7 +286,7 @@ public class Pong_Server extends Server{
             ready[(pClientIP==player[0])?0:1] = true;
             System.out.println("[DEBUG] - Ready von: " + pClientIP);
             if(ready[0]&&ready[1]){    
-                sendToAll("START");        
+                sendToAll("START");
                 System.out.println("[DEBUG] - Start gesendet");
             }        
         }

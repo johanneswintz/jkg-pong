@@ -10,7 +10,7 @@ public class Pong_Server extends Server{
                                                     // 2+ = stop //
     byte scoreL = 0;
     byte scoreR = 0;
-    byte scoreMax = 2; // Punkteanzahl, die zum siegen benoetigt wird
+    byte scoreMax = 100; // Punkteanzahl, die zum siegen benoetigt wird
     int fensterX = 1280; // Fensterbreite (xWert)
     int fensterY = 720; // Fensterhoehe (yWert)
     int pongLaenge = 100;
@@ -34,7 +34,6 @@ public class Pong_Server extends Server{
     
     byte playerCount = 0; //max 2
     String[] player = new String[2];
-    int[] playerPort = new int[2];
     boolean[] ready = new boolean[2];
     
 //------KONSTRUKTOR
@@ -68,16 +67,19 @@ public class Pong_Server extends Server{
         tempTime = System.currentTimeMillis() + 3000;
 
         pause = true;
-		pause();
-		
+        pause(); 
         
-        while (!pause) {
+        while (true) {
             startsequenz();
             wandBerechnung();
             ballBewegung();
             richtungAendern();
-            paint();
             sendData();
+            try {
+                                Thread.sleep(16);
+                        } catch (InterruptedException e) {
+                                e.printStackTrace();
+                        }
         }
     }
 
@@ -115,27 +117,23 @@ public class Pong_Server extends Server{
     }
 
 //////INPUT
-    public void input(String pClientIP, int direction) { //direction -> 0 up / 1 down
+    public void input(String pClientIp, int pClientPort, int direction) { //direction -> 0 up / 1 down
 
-/*        while (Keyboard.next()) {
-            if (Keyboard.getEventKeyState()) {
-                if (Keyboard.getEventKey() == Keyboard.KEY_P) {
-                    pause = true;
-                    pause();
-                }
-            }
-        }*/
-        if (player[0].equals(pClientIP) && direction==0) {
+        if (player[0].equals(pClientIp + ":" + pClientPort) && direction==0) {
             lpos += 1 * speed * speedVerhaeltnis;
+            lposAus = (int) lpos;
         }
-        if (player[0].equals(pClientIP) && direction==1) {
+        if (player[0].equals(pClientIp + ":" + pClientPort) && direction==1) {
             lpos -= 1 * speed * speedVerhaeltnis;
+            lposAus = (int) lpos;
         }
-        if (player[1].equals(pClientIP) && direction==0) {
+        if (player[1].equals(pClientIp + ":" + pClientPort) && direction==0) {
             rpos += 1 * speed * speedVerhaeltnis;
+            rposAus = (int) rpos;
         }
-        if (player[1].equals(pClientIP) && direction==1) {
+        if (player[1].equals(pClientIp + ":" + pClientPort) && direction==1) {
             rpos -= 1 * speed * speedVerhaeltnis;
+            rposAus = (int) rpos;
         }
         lposAus = (int) lpos;
         rposAus = (int) rpos;
@@ -192,7 +190,6 @@ public class Pong_Server extends Server{
             tempTime = System.currentTimeMillis();
             posx = (int) (fensterX / 2) - (ballDicke / 2);
             if ((scoreL >= scoreMax) || (scoreR >= scoreMax)) {
-                paint();
                 ready[0] = false;
                 ready[1] = false;
                 beenden();
@@ -208,7 +205,6 @@ public class Pong_Server extends Server{
             tempTime = System.currentTimeMillis();
             posx = (int) (fensterX / 2) - (ballDicke / 2);
             if ((scoreL >= scoreMax) || (scoreR >= scoreMax)) {
-                paint();
                 ready[0] = false;
                 ready[1] = false;
                 beenden();
@@ -216,20 +212,21 @@ public class Pong_Server extends Server{
         }
     }
 
-//////PAINT
-    public void paint() {}
-
 //////PAUSE
     public void pause() {
         richtungv += 2;
         richtungh += 2;
         long pauseLengthTime = System.currentTimeMillis();
         while (pause) {
-        	if(ready[0] && ready[1]) pause = false;
+                if(ready[0] && ready[1]) pause = false;
+                try {
+                                    Thread.sleep(16);
+                            } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                            }
         }
-		startTime += System.currentTimeMillis()-pauseLengthTime;
-		tempTime += System.currentTimeMillis()-pauseLengthTime;
-        paint();
+        startTime += System.currentTimeMillis()-pauseLengthTime;
+        tempTime += System.currentTimeMillis()-pauseLengthTime;
         
         richtungv -= 2;
         richtungh -= 2;
@@ -239,10 +236,10 @@ public class Pong_Server extends Server{
     
 //////SEND DATA    
     public void sendData(){
-    	if(playerCount==2){
-    		send(player[0],playerPort[0],"DATA:"+posx+":"+posy+":"+lposAus+":"+rposAus+":"+scoreL+":"+scoreR);
-    		send(player[1],playerPort[1],"DATA:"+posx+":"+posy+":"+rposAus+":"+lposAus+":"+scoreR+":"+scoreL);
-    	}
+            if(playerCount==2){
+                send((player[0].split(":"))[0],Integer.parseInt((player[0].split(":"))[1]),"DATA:"+posx+":"+posy+":"+lposAus+":"+rposAus+":"+scoreL+":"+scoreR);
+                send((player[1].split(":"))[0],Integer.parseInt((player[1].split(":"))[1]),"DATA:"+posx+":"+posy+":"+rposAus+":"+lposAus+":"+scoreR+":"+scoreL);
+            }
     }
     
 //////BEENDEN
@@ -256,10 +253,15 @@ public class Pong_Server extends Server{
         pause = true;
         long pauseLengthTime = System.currentTimeMillis();
         while (pause) {
-        	if(ready[0] && ready[1]) pause = false;
+                if(ready[0] && ready[1]) pause = false;
+                try {
+                                    Thread.sleep(16);
+                            } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                            }
         }
-		startTime += System.currentTimeMillis()-pauseLengthTime;
-		tempTime += System.currentTimeMillis()-pauseLengthTime;
+        startTime += System.currentTimeMillis()-pauseLengthTime;
+        tempTime += System.currentTimeMillis()-pauseLengthTime;
     }
 
 //////MAIN
@@ -274,8 +276,8 @@ public class Pong_Server extends Server{
             closeConnection(pClientIP,pClientPort);
             playerCount--;
         }else{
-            player[playerCount-1] = pClientIP + "";
-            playerPort[playerCount-1] = pClientPort;
+            player[playerCount-1] = pClientIP + ":" + pClientPort;
+            ready[playerCount-1] = false;
             sendInitData(pClientIP , pClientPort);
             System.out.println("[DEBUG] - " + player[playerCount-1] + " hat sich als " + playerCount+ "er verbunden!");
         }
@@ -283,8 +285,8 @@ public class Pong_Server extends Server{
     
     public void processMessage(String pClientIP, int pClientPort, String pMessage){
         if(pMessage.equals("READY")){
-            ready[(pClientIP==player[0])?0:1] = true;
-            System.out.println("[DEBUG] - Ready von: " + pClientIP);
+            ready[((pClientIP + ":" + pClientPort).equals(player[0]))?0:1] = true;
+            System.out.println("[DEBUG] - Ready von: " + player[((pClientIP + ":" + pClientPort).equals(player[0]))?0:1]);
             if(ready[0]&&ready[1]){    
                 sendToAll("START");
                 System.out.println("[DEBUG] - Start gesendet");
@@ -292,24 +294,27 @@ public class Pong_Server extends Server{
         }
         
         if(pMessage.split(":")[0].equals("SETPOS")){
-        	input(pClientIP, Integer.parseInt(pMessage.split(":")[1]));
+            System.out.println("[DEBUG] - Position von: " + player[((pClientIP + ":" + pClientPort).equals(player[0]))?0:1] + " - " + pMessage.split(":")[1]);
+            input(pClientIP, pClientPort, Integer.parseInt(pMessage.split(":")[1]));
         }
     }
     
     public void processClosedConnection(String pClientIP, int pClientPort){
         playerCount--;
-        ready[(pClientIP==player[0])?0:1] = false;
-        player[(pClientIP==player[0])?0:1] = "";
-        playerPort[pClientIP==player[0]?0:1] = 0;
+        ready[((pClientIP + ":" + pClientPort).equals(player[0]))?0:1] = false;
+        player[((pClientIP + ":" + pClientPort).equals(player[0]))?0:1] = "";
         pause = true;
-        System.out.println("[DEBUG] - " + pClientIP + " ist weg");
+        System.out.println("[DEBUG] - " + pClientIP + ":" + pClientPort + " ist weg");
     }
     
     public void sendInitData(String pClientIP, int pClientPort){
-        if(player[0].equals(pClientIP)){
-        	send(pClientIP, pClientPort, "INIT:"+fensterX+":"+fensterY+":"+posx+":"+posy+":"+ballDicke+":"+pongSeitenabstand+":"+lposAus+":"+pongDicke+":"+pongLaenge+":"+(fensterX-(pongSeitenabstand+pongDicke))+":"+rposAus);
+        if(player[0].equals(pClientIP + ":" + pClientPort)){
+                send(pClientIP, pClientPort, "INIT:"+fensterX+":"+fensterY+":"+posx+":"+posy+":"+ballDicke+":"+pongSeitenabstand+":"+lposAus+":"+pongDicke+":"+pongLaenge+":"+(fensterX-(pongSeitenabstand+pongDicke))+":"+rposAus+":"+scoreMax);
         }else{
-        	send(pClientIP, pClientPort, "INIT:"+fensterX+":"+fensterY+":"+posx+":"+posy+":"+ballDicke+":"+(fensterX-(pongSeitenabstand+pongDicke))+":"+rposAus+":"+pongDicke+":"+pongLaenge+":"+pongSeitenabstand+":"+lposAus);
+                send(pClientIP, pClientPort, "INIT:"+fensterX+":"+fensterY+":"+posx+":"+posy+":"+ballDicke+":"+(fensterX-(pongSeitenabstand+pongDicke))+":"+rposAus+":"+pongDicke+":"+pongLaenge+":"+pongSeitenabstand+":"+lposAus+":"+scoreMax);
         }
     }
 }
+
+IT WORKS COMPLETELY
+Stand vom 31.01.2016
